@@ -8,16 +8,47 @@ db = SQLAlchemy(app)
 
 
 @app.route('/')
-def hello_world():  # put application's code here
-    # data = db.session.execute(text('SELECT * FROM autor'))
-    data = db.session.execute(text('CALL ObtenerLibrosConPaginacion("Fiction",2)'))
+def index():  # put application's code here
+    categorias = db.session.execute(text('SELECT * FROM categoria'))
+
+    res_dict = categorias.mappings().all()
+
+    # print(res_dict)
+
+    return render_template('index.html', categorias=res_dict)
+
+
+#
+@app.route('/categoria/<string:categoria_nombre>', defaults={'pagina': 1})
+@app.route('/categoria/<string:categoria_nombre>/<int:pagina>')
+def categoria_libros(categoria_nombre, pagina):
+    data = db.session.execute(
+        text('CALL ObtenerLibrosConPaginacion(:categoria, :pagina)'),
+        {'categoria': categoria_nombre, 'pagina': pagina}
+    )
 
     res_dict = data.mappings().all()
-
     print(res_dict)
 
-    # return render_template('index.html', data=res_dict)
-    return render_template('index.html')
+    # while data.returns_rows:
+    #     result = data.fetchall()
+    #     print(result)
+    #     data.nextset()
+
+    # result = data.fetchall()  # Obtiene todos los resultados
+    # libros = [dict(row) for row in result]  # Convierte cada fila en un diccionario
+    #
+    # print(libros)
+    return render_template('libros.html', libros=res_dict)
+
+
+@app.route('/libro/<string:isbn>')
+def detalle_libro(isbn):
+    # libro = next((l for l in libros if l['ISBN'] == isbn), None)
+    # if libro:
+    #     return f"Detalles del libro: {libro['titulo']} (ISBN: {isbn})"
+    # return "Libro no encontrado", 404
+    return isbn
 
 
 if __name__ == '__main__':
