@@ -77,14 +77,14 @@ DELIMITER $$
 DROP PROCEDURE IF EXISTS ObtenerLibrosConPaginacion;
 CREATE PROCEDURE ObtenerLibrosConPaginacion(
     IN p_categoria VARCHAR(255),
+    IN p_limite INT,
     IN p_pagina INT
 )
 BEGIN
-    DECLARE v_limite INT DEFAULT 30;
     DECLARE v_offset INT;
 
     -- Offset por pagina
-    SET v_offset = (p_pagina - 1) * v_limite;
+    SET v_offset = (p_pagina - 1) * p_limite;
 
     SELECT
         l.titulo,
@@ -101,7 +101,7 @@ BEGIN
     INNER JOIN categoria c ON lc.id_categoria = c.id
     WHERE c.nombre = p_categoria
 --     ORDER BY l.titulo ASC
-    LIMIT v_limite OFFSET v_offset;
+    LIMIT p_limite OFFSET v_offset;
 END$$
 
 DELIMITER ;
@@ -145,6 +145,22 @@ BEGIN
         c.id = lc.id_categoria
     GROUP BY
         c.nombre;
+END$$
+
+DELIMITER ;
+
+DELIMITER $$
+
+DROP PROCEDURE IF EXISTS ContarCategoria;
+CREATE PROCEDURE ContarCategoria(IN p_categoria VARCHAR(255))
+BEGIN
+    SELECT
+        count(*) AS count
+    FROM
+        categoria c
+    INNER JOIN libro_categoria lc ON
+        c.id = lc.id_categoria
+    WHERE c.nombre = p_categoria;
 END$$
 
 DELIMITER ;

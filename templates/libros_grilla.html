@@ -28,6 +28,27 @@
     </div>
 </div>
 
+<!-- Paginación -->
+<nav class="mt-4">
+    <ul class="pagination justify-content-center">
+        {% if num_libros_pagina > 0 %}
+            {% set total_pages = (num_libros // num_libros_pagina) + (1 if num_libros % num_libros_pagina > 0 else 0) %}
+            {% for page in range(1, total_pages + 1) %}
+                {% if page <= total_pages %}
+                    <li class="page-item {% if page == pagina %}active{% endif %}">
+                        <a class="page-link"
+                           href="{{ url_for('categoria_libros', categoria_nombre=categoria_nombre, pagina=page) }}">{{ page }}</a>
+                    </li>
+                {% endif %}
+            {% endfor %}
+        {% else %}
+            <li class="page-item disabled">
+                <span class="page-link">No hay resultados</span>
+            </li>
+        {% endif %}
+    </ul>
+</nav>
+
 <!-- Bootstrap JS -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>

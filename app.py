@@ -18,18 +18,22 @@ def index():  # put application's code here
     return render_template('index.html', categorias=res_dict)
 
 
-#
 @app.route('/categoria/<string:categoria_nombre>', defaults={'pagina': 1})
 @app.route('/categoria/<string:categoria_nombre>/<int:pagina>')
 def categoria_libros(categoria_nombre, pagina):
+    num_libros_pagina = 20
+    num_libros = db.session.execute(text('CALL ContarCategoria(:categoria)'),
+                                    {'categoria': categoria_nombre}).scalar()
+    # print(num_libros)
     data = db.session.execute(
-        text('CALL ObtenerLibrosConPaginacion(:categoria, :pagina)'),
-        {'categoria': categoria_nombre, 'pagina': pagina}
+        text('CALL ObtenerLibrosConPaginacion(:categoria, :limite, :pagina)'),
+        {'categoria': categoria_nombre, 'limite': num_libros_pagina, 'pagina': pagina}
     )
 
     res_dict = data.mappings().all()
 
-    return render_template('libros_grilla.html', libros=res_dict)
+    return render_template('libros_grilla.html', libros=res_dict, num_libros_pagina=num_libros_pagina,
+                           num_libros=num_libros, categoria_nombre=categoria_nombre, pagina=pagina)
 
 
 @app.route('/libro/<string:isbn>')
@@ -47,4 +51,5 @@ def detalle_libro(isbn):
 
 
 if __name__ == '__main__':
+    app.run(debug=True)
     app.run()

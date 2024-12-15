@@ -1,29 +1,29 @@
 USE libreria;
 
-ALTER TABLE `empleado` DROP FOREIGN KEY `empleado_fk0` IF EXISTS;
+ALTER TABLE `empleado` DROP FOREIGN KEY `empleado_fk4`;
 ALTER TABLE `gerente` DROP FOREIGN KEY `gerente_fk0`;
 ALTER TABLE `supervisor` DROP FOREIGN KEY `supervisor_fk0`;
 ALTER TABLE `vendedor` DROP FOREIGN KEY `vendedor_fk0`;
-ALTER TABLE `sucursal` DROP FOREIGN KEY `sucursal_fk0`;
-ALTER TABLE `pedido` DROP FOREIGN KEY `pedido_fk0`;
-ALTER TABLE `pedido` DROP FOREIGN KEY `pedido_fk1`;
-
+ALTER TABLE `sucursal` DROP FOREIGN KEY `sucursal_fk6`;
+ALTER TABLE `pedido` DROP FOREIGN KEY `pedido_fk3`;
+ALTER TABLE `pedido` DROP FOREIGN KEY `pedido_fk4`;
 
 ALTER TABLE `libro_categoria` DROP FOREIGN KEY `libro_categoria_fk0`;
 ALTER TABLE `libro_categoria` DROP FOREIGN KEY `libro_categoria_fk1`;
 ALTER TABLE `libro_autor` DROP FOREIGN KEY `libro_autor_fk0`;
 ALTER TABLE `libro_autor` DROP FOREIGN KEY `libro_autor_fk1`;
-ALTER TABLE `detalle_pedido` DROP FOREIGN KEY `detalle_pedido_fk0`;
-ALTER TABLE `detalle_pedido` DROP FOREIGN KEY `detalle_pedido_fk1`;
+ALTER TABLE `detalle_pedido` DROP FOREIGN KEY `detalle_pedido_fk2`;
+ALTER TABLE `detalle_pedido` DROP FOREIGN KEY `detalle_pedido_fk3`;
 
 ALTER TABLE `cliente_telefono` DROP FOREIGN KEY `cliente_telefono_fk0`;
-ALTER TABLE `cliente_email` DROP FOREIGN KEY `cliente_email_fk0`;
-ALTER TABLE `colegio` DROP FOREIGN KEY `colegio_fk0`;
+ALTER TABLE `cliente_email` DROP FOREIGN KEY `cliente_email_fk1`;
+ALTER TABLE `colegio` DROP FOREIGN KEY `colegio_fk3`;
 ALTER TABLE `individual` DROP FOREIGN KEY `individual_fk0`;
-ALTER TABLE `compra` DROP FOREIGN KEY `compra_fk0`;
-ALTER TABLE `compra` DROP FOREIGN KEY `compra_fk1`;
-ALTER TABLE `detalle_compra` DROP FOREIGN KEY `detalle_compra_fk0`;
+ALTER TABLE `compra` DROP FOREIGN KEY `compra_fk2`;
+ALTER TABLE `compra` DROP FOREIGN KEY `compra_fk3`;
 ALTER TABLE `detalle_compra` DROP FOREIGN KEY `detalle_compra_fk1`;
+ALTER TABLE `detalle_compra` DROP FOREIGN KEY `detalle_compra_fk3`;
+
 DROP TABLE IF EXISTS `empleado`;
 DROP TABLE IF EXISTS `gerente`;
 DROP TABLE IF EXISTS `supervisor`;
@@ -68,6 +68,7 @@ CREATE TABLE IF NOT EXISTS `supervisor` (
 CREATE TABLE IF NOT EXISTS `vendedor` (
 	`id` bigint NOT NULL,
 	`meta_mensual` bigint NOT NULL,
+    `id_supervisor` bigint,
 	PRIMARY KEY (`id`)
 );
 
@@ -78,7 +79,7 @@ CREATE TABLE IF NOT EXISTS `sucursal` (
 	`ciudad` varchar(255) NOT NULL,
 	`calle` varchar(255) NOT NULL,
 	`numero` varchar(255) NOT NULL,
-	`id_gerente` bigint NOT NULL,
+	`id_gerente` bigint,
 	PRIMARY KEY (`id`)
 );
 
@@ -206,20 +207,13 @@ ALTER TABLE `supervisor` ADD CONSTRAINT `supervisor_fk0` FOREIGN KEY (`id`) REFE
 ALTER TABLE `vendedor` ADD CONSTRAINT `vendedor_fk0` FOREIGN KEY (`id`) REFERENCES `empleado`(`id`);
 ALTER TABLE `sucursal` ADD CONSTRAINT `sucursal_fk6` FOREIGN KEY (`id_gerente`) REFERENCES `gerente`(`id`);
 ALTER TABLE `pedido` ADD CONSTRAINT `pedido_fk3` FOREIGN KEY (`id_gerente`) REFERENCES `gerente`(`id`);
-
 ALTER TABLE `pedido` ADD CONSTRAINT `pedido_fk4` FOREIGN KEY (`id_proveedor`) REFERENCES `proveedor`(`id`);
 
-
-
-
 ALTER TABLE `libro_categoria` ADD CONSTRAINT `libro_categoria_fk0` FOREIGN KEY (`id_categoria`) REFERENCES `categoria`(`id`);
-
 ALTER TABLE `libro_categoria` ADD CONSTRAINT `libro_categoria_fk1` FOREIGN KEY (`id_libro`) REFERENCES `libro`(`id`);
 ALTER TABLE `libro_autor` ADD CONSTRAINT `libro_autor_fk0` FOREIGN KEY (`id_autor`) REFERENCES `autor`(`id`);
-
 ALTER TABLE `libro_autor` ADD CONSTRAINT `libro_autor_fk1` FOREIGN KEY (`id_libro`) REFERENCES `libro`(`id`);
 ALTER TABLE `detalle_pedido` ADD CONSTRAINT `detalle_pedido_fk2` FOREIGN KEY (`id_libro`) REFERENCES `libro`(`id`);
-
 ALTER TABLE `detalle_pedido` ADD CONSTRAINT `detalle_pedido_fk3` FOREIGN KEY (`id_pedido`) REFERENCES `pedido`(`id`);
 
 ALTER TABLE `cliente_telefono` ADD CONSTRAINT `cliente_telefono_fk0` FOREIGN KEY (`id_cliente`) REFERENCES `cliente`(`id`);
@@ -227,8 +221,6 @@ ALTER TABLE `cliente_email` ADD CONSTRAINT `cliente_email_fk1` FOREIGN KEY (`id_
 ALTER TABLE `colegio` ADD CONSTRAINT `colegio_fk3` FOREIGN KEY (`id`) REFERENCES `cliente`(`id`);
 ALTER TABLE `individual` ADD CONSTRAINT `individual_fk0` FOREIGN KEY (`id`) REFERENCES `cliente`(`id`);
 ALTER TABLE `compra` ADD CONSTRAINT `compra_fk2` FOREIGN KEY (`id_cliente`) REFERENCES `cliente`(`id`);
-
 ALTER TABLE `compra` ADD CONSTRAINT `compra_fk3` FOREIGN KEY (`id_vendedor`) REFERENCES `vendedor`(`id`);
 ALTER TABLE `detalle_compra` ADD CONSTRAINT `detalle_compra_fk1` FOREIGN KEY (`id_compra`) REFERENCES `compra`(`id`);
-
 ALTER TABLE `detalle_compra` ADD CONSTRAINT `detalle_compra_fk3` FOREIGN KEY (`id_libro`) REFERENCES `libro`(`id`);
