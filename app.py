@@ -39,16 +39,21 @@ def categoria_libros(categoria_nombre, pagina):
     # libros = [dict(row) for row in result]  # Convierte cada fila en un diccionario
     #
     # print(libros)
-    return render_template('libros.html', libros=res_dict)
+    return render_template('libros_grilla.html', libros=res_dict)
 
 
 @app.route('/libro/<string:isbn>')
 def detalle_libro(isbn):
-    # libro = next((l for l in libros if l['ISBN'] == isbn), None)
-    # if libro:
-    #     return f"Detalles del libro: {libro['titulo']} (ISBN: {isbn})"
-    # return "Libro no encontrado", 404
-    return isbn
+    data = db.session.execute(
+        text('CALL ObtenerLibroPorISBN(:isbn)'), {'isbn': isbn})
+
+    res_dict = data.mappings().all()
+    if len(res_dict) == 0:
+        return "Libro no encontrado"
+
+    # print(res_dict)
+
+    return render_template('libro.html', libro=res_dict[0])
 
 
 if __name__ == '__main__':

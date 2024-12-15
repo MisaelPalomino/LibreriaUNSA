@@ -105,3 +105,28 @@ BEGIN
 END$$
 
 DELIMITER ;
+
+DELIMITER $$
+
+DROP PROCEDURE IF EXISTS ObtenerLibroPorISBN;
+CREATE PROCEDURE ObtenerLibroPorISBN(
+    IN p_ISBN VARCHAR(255)
+)
+BEGIN
+    SELECT
+        l.titulo,
+        l.ISBN,
+        l.editorial,
+        c.nombre AS categoria,
+        l.precio,
+        l.paginas,
+        l.descripcion,
+        l.path_img
+    FROM
+        libro l
+    INNER JOIN libro_categoria lc ON l.id = lc.id_libro
+    INNER JOIN categoria c ON lc.id_categoria = c.id
+    WHERE l.ISBN= p_ISBN;
+END$$
+
+DELIMITER ;
