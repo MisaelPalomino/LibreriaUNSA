@@ -13,8 +13,9 @@
     <ul class="list-group">
         {% for categoria in categorias %}
             <li class="list-group-item">
-                <a href="{{ url_for('categoria_libros', categoria_nombre=categoria.nombre) }}" class="text-decoration-none">
-                    {{ categoria.nombre }}
+                <a href="{{ url_for('categoria_libros', categoria_nombre=categoria.nombre) }}"
+                   class="text-decoration-none">
+                    {{ categoria.nombre }} ( {{ categoria.count }} )
                 </a>
             </li>
         {% endfor %}

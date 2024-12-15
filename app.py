@@ -9,7 +9,7 @@ db = SQLAlchemy(app)
 
 @app.route('/')
 def index():  # put application's code here
-    categorias = db.session.execute(text('SELECT * FROM categoria'))
+    categorias = db.session.execute(text('CALL ObtenerCategorias()'))
 
     res_dict = categorias.mappings().all()
 
@@ -28,17 +28,7 @@ def categoria_libros(categoria_nombre, pagina):
     )
 
     res_dict = data.mappings().all()
-    print(res_dict)
 
-    # while data.returns_rows:
-    #     result = data.fetchall()
-    #     print(result)
-    #     data.nextset()
-
-    # result = data.fetchall()  # Obtiene todos los resultados
-    # libros = [dict(row) for row in result]  # Convierte cada fila en un diccionario
-    #
-    # print(libros)
     return render_template('libros_grilla.html', libros=res_dict)
 
 

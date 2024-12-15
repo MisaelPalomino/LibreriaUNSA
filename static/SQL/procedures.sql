@@ -130,3 +130,21 @@ BEGIN
 END$$
 
 DELIMITER ;
+
+DELIMITER $$
+
+DROP PROCEDURE IF EXISTS ObtenerCategorias;
+CREATE PROCEDURE ObtenerCategorias()
+BEGIN
+    SELECT
+        c.nombre,
+        count(*) AS count
+    FROM
+        categoria c
+    INNER JOIN libro_categoria lc ON
+        c.id = lc.id_categoria
+    GROUP BY
+        c.nombre;
+END$$
+
+DELIMITER ;
