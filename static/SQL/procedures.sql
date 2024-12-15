@@ -57,3 +57,36 @@ BEGIN
 END$$
 
 DELIMITER ;
+
+DELIMITER $$
+
+CREATE PROCEDURE ObtenerLibrosConPaginacion(
+    IN p_categoria VARCHAR(255),
+    IN p_pagina INT
+)
+BEGIN
+    DECLARE v_limite INT DEFAULT 30;
+    DECLARE v_offset INT;
+
+    -- Offset por pagina
+    SET v_offset = (p_pagina - 1) * v_limite;
+
+    SELECT
+        l.titulo,
+        l.ISBN,
+        l.editorial,
+        c.nombre AS categoria,
+        l.precio,
+        l.paginas,
+        l.descripcion,
+        l.path_img
+    FROM
+        libro l
+    INNER JOIN libro_categoria lc ON l.id = lc.id_libro
+    INNER JOIN categoria c ON lc.id_categoria = c.id
+    WHERE c.nombre = p_categoria
+--     ORDER BY l.titulo ASC
+    LIMIT v_limite OFFSET v_offset;
+END$$
+
+DELIMITER ;

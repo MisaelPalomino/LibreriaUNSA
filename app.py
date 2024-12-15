@@ -9,7 +9,9 @@ db = SQLAlchemy(app)
 
 @app.route('/')
 def hello_world():  # put application's code here
-    data = db.session.execute(text('SELECT * FROM autor'))
+    # data = db.session.execute(text('SELECT * FROM autor'))
+    data = db.session.execute(text('CALL ObtenerLibrosConPaginacion("Fiction",2)'))
+
     res_dict = data.mappings().all()
 
     print(res_dict)
