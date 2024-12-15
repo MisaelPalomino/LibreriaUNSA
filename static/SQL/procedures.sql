@@ -1,6 +1,77 @@
 USE libreria;
 
 DELIMITER $$
+DROP PROCEDURE IF EXISTS LoginCliente;
+CREATE PROCEDURE LoginCliente(
+    IN p_email VARCHAR(255),
+    IN p_password VARCHAR(255)
+)
+BEGIN
+    SELECT c.id, c.password
+    FROM cliente c
+    INNER JOIN cliente_email ce ON ce.id_cliente = c.id
+    WHERE ce.email = p_email
+    AND c.password = p_password;
+END$$
+DELIMITER ;
+
+DELIMITER $$
+
+-- TODO: Agregar numero
+DROP PROCEDURE IF EXISTS RegistrarCliente;
+CREATE PROCEDURE RegistrarCliente(
+    IN p_email VARCHAR(255),
+    IN p_password VARCHAR(255),
+    IN p_tipo_cliente ENUM('individual', 'colegio'),
+    IN p_departamento VARCHAR(255),  -- Nuevo parámetro
+    IN p_ciudad VARCHAR(255),        -- Nuevo parámetro
+    IN p_calle VARCHAR(255),         -- Nuevo parámetro
+    IN p_numero VARCHAR(255),        -- Nuevo parámetro
+    IN p_nombres VARCHAR(255),       -- Solo para 'individual'
+    IN p_apellido1 VARCHAR(255),     -- Solo para 'individual'
+    IN p_apellido2 VARCHAR(255),     -- Solo para 'individual'
+    IN p_nacionalidad VARCHAR(255),  -- Solo para 'individual'
+    IN p_nombre_colegio VARCHAR(255),-- Solo para 'colegio'
+    IN p_niveles_educativos BIGINT,  -- Solo para 'colegio'
+    IN p_tipo_colegio VARCHAR(255)   -- Solo para 'colegio'
+)
+BEGIN
+    DECLARE nuevo_id BIGINT;
+
+    -- Insertar el cliente principal en la tabla `cliente`
+    INSERT INTO cliente (departamento, ciudad, calle, numero, password)
+    VALUES (p_departamento, p_ciudad, p_calle, p_numero, p_password);
+    SET nuevo_id = LAST_INSERT_ID();
+
+    -- Insertar el email asociado al cliente
+    INSERT INTO cliente_email (id_cliente, email)
+    VALUES (nuevo_id, p_email);
+
+    -- Manejar inserciones según el tipo de cliente
+    IF p_tipo_cliente = 'colegio' THEN
+        INSERT INTO colegio (id, nombre, niveles_educativos, tipo)
+        VALUES (
+            nuevo_id,
+            p_nombre_colegio,
+            p_niveles_educativos,
+            p_tipo_colegio
+        );
+    ELSE
+        INSERT INTO individual (id, nombres, apellido1, apellido2, nacionalidad)
+        VALUES (
+            nuevo_id,
+            p_nombres,
+            p_apellido1,
+            p_apellido2,
+            p_nacionalidad
+        );
+    END IF;
+END$$
+
+DELIMITER ;
+
+
+DELIMITER $$
 
 DROP PROCEDURE IF EXISTS InsertarLibroConAutorYCategoria;
 CREATE PROCEDURE InsertarLibroConAutorYCategoria(

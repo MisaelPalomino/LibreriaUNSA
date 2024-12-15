@@ -1,6 +1,7 @@
-from flask import Flask, render_template
+from flask import Flask, render_template, request, flash, redirect, url_for
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import text
+from werkzeug.security import check_password_hash
 
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+pymysql://root:Elhuequito1<=3@localhost:3306/libreria'
@@ -48,6 +49,84 @@ def detalle_libro(isbn):
     # print(res_dict)
 
     return render_template('libro.html', libro=res_dict[0])
+
+
+@app.route('/registro', methods=['GET', 'POST'])
+def registro():
+    if request.method == 'POST':
+
+        email = request.form['email']
+        password = request.form['password']
+        tipo_cliente = request.form['tipo_cliente']
+
+        nombres = apellido1 = apellido2 = nacionalidad = None
+        nombre_colegio = niveles_educativos = tipo_colegio = None
+        departamento = request.form.get('departamento')
+        ciudad = request.form.get('ciudad')
+        calle = request.form.get('calle')
+        numero = request.form.get('numero')
+
+        if tipo_cliente == 'individual':
+            nombres = request.form.get('nombres')
+            apellido1 = request.form.get('apellido1')
+            apellido2 = request.form.get('apellido2')
+            nacionalidad = request.form.get('nacionalidad')
+
+        elif tipo_cliente == 'colegio':
+            nombre_colegio = request.form.get('nombre_colegio')
+            niveles_educativos = request.form.get('niveles_educativos')
+            tipo_colegio = request.form.get('tipo_colegio')
+
+        try:
+            db.session.execute(text('''CALL RegistrarCliente(
+                :email, :password, :tipo_cliente, :departamento, :ciudad, :calle, :numero,
+                :nombres, :apellido1, :apellido2, :nacionalidad, :nombre_colegio, :niveles_educativos, :tipo_colegio
+            )'''), {
+                'email': email,
+                'password': password,
+                'tipo_cliente': tipo_cliente,
+                'departamento': departamento,
+                'ciudad': ciudad,
+                'calle': calle,
+                'numero': numero,
+                'nombres': nombres,
+                'apellido1': apellido1,
+                'apellido2': apellido2,
+                'nacionalidad': nacionalidad,
+                'nombre_colegio': nombre_colegio,
+                'niveles_educativos': niveles_educativos,
+                'tipo_colegio': tipo_colegio
+            })
+            db.session.commit()
+            flash('Registro exitoso. Ahora puedes iniciar sesión.', 'success')
+            return redirect(url_for('login'))
+        except Exception as e:
+            db.session.rollback()
+            flash(f'Error en el registro: {str(e)}', 'danger')
+
+    return render_template('registro.html')
+
+
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    if request.method == 'POST':
+        email = request.form['email']
+        password = request.form['password']
+
+        try:
+            result = db.session.execute(
+                text('CALL LoginCliente(:email, :password)'), {'email': email, 'password': password})
+            cliente = result.mappings().first()
+
+            if cliente and check_password_hash(cliente['password'], password):
+                flash('Inicio de sesión exitoso.', 'success')
+                return redirect(url_for('index'))
+            else:
+                flash('Credenciales inválidas. Inténtalo nuevamente.', 'danger')
+        except Exception as e:
+            flash(f'Error en el inicio de sesión: {str(e)}', 'danger')
+
+    return render_template('login.html')
 
 
 if __name__ == '__main__':
