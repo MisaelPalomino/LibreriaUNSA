@@ -15,10 +15,11 @@ CREATE PROCEDURE InsertarLibroConAutorYCategoria(
     IN p_categoria_nombre VARCHAR(255),
     IN p_autor_nombre VARCHAR(255)
 )
-BEGIN
+label:BEGIN
     DECLARE v_libro_id BIGINT;
     DECLARE v_categoria_id BIGINT;
     DECLARE v_autor_id BIGINT;
+    DECLARE existe INT;
 
     START TRANSACTION;
 
@@ -42,6 +43,19 @@ BEGIN
         SET v_autor_id = LAST_INSERT_ID();
     END IF;
 
+    -- Verificar si ya existe el libro
+
+    SELECT count(*) INTO existe
+    FROM libro
+    WHERE ISBN = p_ISBN
+    LIMIT 1;
+
+    -- Si existe se cancela el insert
+    IF (existe > 0) THEN
+        ROLLBACK;
+        LEAVE label;
+    END IF;
+
     INSERT INTO libro (anio_publicacion, precio, ISBN, titulo, descripcion, paginas, editorial, path_img) 
     VALUES (p_anio_publicacion, p_precio, p_ISBN, p_titulo, p_descripcion, p_paginas, p_editorial, p_path_img);
     SET v_libro_id = LAST_INSERT_ID();
@@ -60,6 +74,7 @@ DELIMITER ;
 
 DELIMITER $$
 
+DROP PROCEDURE IF EXISTS ObtenerLibrosConPaginacion;
 CREATE PROCEDURE ObtenerLibrosConPaginacion(
     IN p_categoria VARCHAR(255),
     IN p_pagina INT
