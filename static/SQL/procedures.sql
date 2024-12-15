@@ -17,7 +17,6 @@ DELIMITER ;
 
 DELIMITER $$
 
--- TODO: Agregar numero
 DROP PROCEDURE IF EXISTS RegistrarCliente;
 CREATE PROCEDURE RegistrarCliente(
     IN p_email VARCHAR(255),
@@ -27,6 +26,7 @@ CREATE PROCEDURE RegistrarCliente(
     IN p_ciudad VARCHAR(255),        -- Nuevo parámetro
     IN p_calle VARCHAR(255),         -- Nuevo parámetro
     IN p_numero VARCHAR(255),        -- Nuevo parámetro
+    IN p_telefono BIGINT,
     IN p_nombres VARCHAR(255),       -- Solo para 'individual'
     IN p_apellido1 VARCHAR(255),     -- Solo para 'individual'
     IN p_apellido2 VARCHAR(255),     -- Solo para 'individual'
@@ -47,13 +47,17 @@ BEGIN
     INSERT INTO cliente_email (id_cliente, email)
     VALUES (nuevo_id, p_email);
 
+    -- Insertado de telefono
+    INSERT INTO cliente_telefono(id_cliente, telefono)
+    VALUES (nuevo_id, p_telefono);
+
     -- Manejar inserciones según el tipo de cliente
     IF p_tipo_cliente = 'colegio' THEN
         INSERT INTO colegio (id, nombre, niveles_educativos, tipo)
         VALUES (
             nuevo_id,
             p_nombre_colegio,
-            p_niveles_educativos,
+--             p_niveles_educativos,
             p_tipo_colegio
         );
     ELSE

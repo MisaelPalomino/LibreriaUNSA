@@ -5,6 +5,7 @@ from werkzeug.security import check_password_hash
 
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+pymysql://root:Elhuequito1<=3@localhost:3306/libreria'
+app.secret_key = 'Elhuequito1<=3'
 db = SQLAlchemy(app)
 
 
@@ -65,6 +66,7 @@ def registro():
         ciudad = request.form.get('ciudad')
         calle = request.form.get('calle')
         numero = request.form.get('numero')
+        telefono = request.form.get('telefono')
 
         if tipo_cliente == 'individual':
             nombres = request.form.get('nombres')
@@ -79,7 +81,7 @@ def registro():
 
         try:
             db.session.execute(text('''CALL RegistrarCliente(
-                :email, :password, :tipo_cliente, :departamento, :ciudad, :calle, :numero,
+                :email, :password, :tipo_cliente, :departamento, :ciudad, :calle, :numero, :telefono,
                 :nombres, :apellido1, :apellido2, :nacionalidad, :nombre_colegio, :niveles_educativos, :tipo_colegio
             )'''), {
                 'email': email,
@@ -89,6 +91,7 @@ def registro():
                 'ciudad': ciudad,
                 'calle': calle,
                 'numero': numero,
+                'telefono': telefono,
                 'nombres': nombres,
                 'apellido1': apellido1,
                 'apellido2': apellido2,
@@ -122,6 +125,7 @@ def login():
                 flash('Inicio de sesión exitoso.', 'success')
                 return redirect(url_for('index'))
             else:
+                print('Credenciales invalidas')
                 flash('Credenciales inválidas. Inténtalo nuevamente.', 'danger')
         except Exception as e:
             flash(f'Error en el inicio de sesión: {str(e)}', 'danger')
