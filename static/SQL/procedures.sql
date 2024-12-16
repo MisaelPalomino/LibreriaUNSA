@@ -175,7 +175,109 @@ END$$
 
 DELIMITER ;
 
+DELIMITER //
 
+DROP PROCEDURE IF EXISTS ObtenerEmpleado//
+CREATE PROCEDURE ObtenerEmpleado (
+    IN p_empleado_id BIGINT
+)
+BEGIN
+    SELECT
+        id,
+        CONCAT(nombres, ' ', apellido1, ' ', apellido2) AS nombre_completo,
+        id_sucursal,
+        password
+    FROM
+        empleado
+    WHERE
+        id = p_empleado_id;
+END //
+
+DELIMITER ;
+
+DELIMITER $$
+
+DROP PROCEDURE IF EXISTS ObtenerComprasPorVendedor$$
+CREATE PROCEDURE ObtenerComprasPorVendedor (
+    IN p_vendedor_id BIGINT
+)
+BEGIN
+    SELECT
+        c.id AS compra_id,
+        c.fecha AS fecha_compra,
+        c.id_cliente,
+        CONCAT(cli.nombres, ' ', cli.apellido1, ' ', cli.apellido2) AS cliente_nombre,
+        c.id_vendedor,
+        CONCAT(v.nombres, ' ', v.apellido1, ' ', v.apellido2) AS vendedor_nombre,
+        dc.id_libro,
+        l.titulo AS libro_titulo,
+        dc.cantidad,
+        dc.cantidad * l.precio AS total_libro
+    FROM
+        compra c
+    INNER JOIN
+        vendedor v ON c.id_vendedor = v.id
+    INNER JOIN
+        cliente cli ON c.id_cliente = cli.id
+    INNER JOIN
+        detalle_compra dc ON c.id = dc.id_compra
+    INNER JOIN
+        libro l ON dc.id_libro = l.id
+    WHERE
+        c.id_vendedor = p_vendedor_id;
+END$$
+
+DELIMITER ;
+
+DELIMITER //
+
+DROP PROCEDURE IF EXISTS ObtenerSucursalesPorGerente//
+CREATE PROCEDURE ObtenerSucursalesPorGerente (
+    IN p_gerente_id BIGINT
+)
+BEGIN
+    SELECT
+        s.id AS sucursal_id,
+        s.nombre AS sucursal_nombre,
+        s.departamento,
+        s.ciudad,
+        s.calle,
+        s.numero,
+        g.id AS gerente_id
+    FROM
+        sucursal s
+    INNER JOIN
+        gerente g ON s.id_gerente = g.id
+    WHERE
+        s.id_gerente = p_gerente_id;
+END //
+
+DELIMITER ;
+
+DELIMITER //
+
+DROP PROCEDURE IF EXISTS ObtenerVendedoresPorSupervisor//
+CREATE PROCEDURE ObtenerVendedoresPorSupervisor (
+    IN p_supervisor_id BIGINT
+)
+BEGIN
+    SELECT
+        v.id AS vendedor_id,
+        CONCAT(e.nombres, ' ', e.apellido1, ' ', e.apellido2) AS vendedor_nombre,
+        v.meta_mensual,
+        v.id_supervisor,
+        CONCAT(sup.nombres, ' ', sup.apellido1, ' ', sup.apellido2) AS supervisor_nombre
+    FROM
+        vendedor v
+    INNER JOIN
+        empleado e ON v.id = e.id
+    INNER JOIN
+        empleado sup ON v.id_supervisor = sup.id
+    WHERE
+        v.id_supervisor = p_supervisor_id;
+END //
+
+DELIMITER ;
 
 
 

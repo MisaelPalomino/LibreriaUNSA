@@ -148,18 +148,45 @@ def login_empleado():
         tipo = data.mappings().first()
 
         if tipo:
-            session['employee_id'] = empleado['id']
+            session['id'] = empleado['id']
             session['role'] = tipo['ROL']
-            # Redirigir según el rol
-            if tipo['ROL'] == 'vendedor':
-                return redirect(url_for('vendedor_dashboard'))
-            elif tipo['ROL'] == 'supervisor':
-                return redirect(url_for('supervisor_dashboard'))
-            elif tipo['ROL'] == 'gerente':
-                return redirect(url_for('gerente_dashboard'))
+            return redirect(url_for('dashboard_empleado'))
+            # # Redirigir según el rol
+            # if tipo['ROL'] == 'vendedor':
+            #     return "Vendedor"
+            #     # return redirect(url_for('vendedor_dashboard'))
+            # elif tipo['ROL'] == 'supervisor':
+            #     return "Supervisor"
+            #     # return redirect(url_for('supervisor_dashboard'))
+            # elif tipo['ROL'] == 'gerente':
+            #     return "Gerente"
+            # return redirect(url_for('gerente_dashboard'))
     else:
         print("Credenciales inválidas")
         return render_template('login_empleado.html')
+
+
+@app.route('/dashboard_empleado')
+def dashboard_empleado():
+    if session['role'] == 'vendedor' or session['role'] == 'supervisor' or session['role'] == 'gerente':
+        data = db.session.execute(text('CALL ObtenerEmpleado(:id)'), {'id': session['id']})
+        datos_generales = data.mappings().first()
+
+        if session['role'] == 'vendedor':
+            data = db.session.execute(text('CALL ObtenerComprasPorVendedor(:id)'), {'id': session['id']})
+            datos_especificos = data.mappings().all()
+        elif session['role'] == 'supervisor':
+            data = db.session.execute(text('CALL ObtenerVendedoresPorSupervisor(:id)'), {'id': session['id']})
+            datos_especificos = data.mappings().all()
+        else:
+            data = db.session.execute(text('CALL ObtenerSucursalesPorGerente(:id)'), {'id': session['id']})
+            datos_especificos = data.mappings().all()
+
+        print(datos_generales)
+        print(datos_especificos)
+
+        return render_template('dashboard_empleado.html', datos_generales=datos_generales,
+                               datos_especificos=datos_especificos)
 
 
 if __name__ == '__main__':
