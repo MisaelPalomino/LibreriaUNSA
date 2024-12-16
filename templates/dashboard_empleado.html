@@ -4,34 +4,62 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard Empleado</title>
-    <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
 </head>
 <body>
 <div class="container mt-5">
     <h1 class="text-center">Dashboard de Empleado</h1>
 
-    <!-- Datos generales comunes -->
     <div class="card my-3">
         <div class="card-header">Datos Generales</div>
         <div class="card-body">
             <p><strong>ID:</strong> {{ session['id'] }}</p>
-            <p><strong>Nombre:</strong> {{ datos_generales.nombre_completo }}
-            </p>
+            <p><strong>Nombre:</strong> {{ datos_generales.nombre_completo }}</p>
             <p><strong>Sucursal:</strong> {{ datos_generales.id_sucursal }}</p>
             <p><strong>Rol:</strong> {{ session['role'] }}</p>
         </div>
     </div>
 
-    <!-- Contenido específico según el rol -->
     {% if session['role'] == 'gerente' %}
-        <div class="card my-3">
-            <div class="card-header">Sucursal Administrada</div>
-            <div class="card-body">
-                <p><strong>Nombre de la Sucursal:</strong> {{ datos_especificos.sucursal_nombre }}</p>
-                <p><strong>Ubicación:</strong> {{ datos_especificos.sucursal_ubicacion }}</p>
-            </div>
+    <div class="card my-3">
+        <div class="card-header">Sucursal Administrada</div>
+        <div class="card-body">
+            <p><strong>Nombre de la Sucursal:</strong> {{ datos_especificos.sucursales[0].nombre }}</p>
+            <p><strong>Ubicación:</strong> {{ datos_especificos.sucursales[0].ubicacion }}</p>
         </div>
+    </div>
+
+    <div class="card my-3">
+        <div class="card-header">Supervisores en la Sucursal</div>
+        <div class="card-body">
+            <ul>
+                {% for supervisor in datos_especificos.supervisores %}
+                    <li>{{ supervisor.NombreCompleto }} (ID: {{ supervisor.SupervisorID }}), Sucursal: {{ supervisor.Sucursal }}</li>
+                {% endfor %}
+            </ul>
+        </div>
+    </div>
+    
+    
+
+    <div class="card my-3">
+        <div class="card-header">Asignar Supervisor a la Sucursal</div>
+        <div class="card-body">
+            <form method="POST" action="/asignar_supervisor">
+                <div class="mb-3">
+                    <label for="supervisor" class="form-label">Seleccionar Supervisor:</label>
+                    <select class="form-select" id="supervisor" name="supervisor_id" required>
+                        <option value="" disabled selected>Selecciona un supervisor</option>
+                        {% for supervisor in datos_especificos.supervisores_disponibles %}
+                            <option value="{{ supervisor.id }}">{{ supervisor.nombre_completo }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <input type="hidden" name="sucursal_id" value="{{ datos_especificos.sucursales[0].id }}">
+                <button type="submit" class="btn btn-primary">Asignar Supervisor</button>
+            </form>
+        </div>
+    </div>
     {% elif session['role'] == 'supervisor' %}
         <div class="card my-3">
             <div class="card-header">Empleados Supervisados</div>
@@ -61,7 +89,6 @@
 
 </div>
 
-<!-- Bootstrap JS -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
