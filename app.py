@@ -167,26 +167,41 @@ def login_empleado():
 
 
 @app.route('/dashboard_empleado')
+@app.route('/dashboard_empleado')
 def dashboard_empleado():
-    if session['role'] == 'vendedor' or session['role'] == 'supervisor' or session['role'] == 'gerente':
+    if session['role'] in ['vendedor', 'supervisor', 'gerente']:
         data = db.session.execute(text('CALL ObtenerEmpleado(:id)'), {'id': session['id']})
         datos_generales = data.mappings().first()
 
-        if session['role'] == 'vendedor':
-            data = db.session.execute(text('CALL ObtenerComprasPorVendedor(:id)'), {'id': session['id']})
-            datos_especificos = data.mappings().all()
-        elif session['role'] == 'supervisor':
-            data = db.session.execute(text('CALL ObtenerVendedoresPorSupervisor(:id)'), {'id': session['id']})
-            datos_especificos = data.mappings().all()
-        else:
+        if session['role'] == 'gerente':
+            data = db.session.execute(text('CALL ObtenerSupervisoresDisponibles()'))
+            supervisores_disponibles = data.mappings().all()
+
             data = db.session.execute(text('CALL ObtenerSucursalesPorGerente(:id)'), {'id': session['id']})
-            datos_especificos = data.mappings().all()
+            datos_sucursales = data.mappings().all()
 
-        print(datos_generales)
-        print(datos_especificos)
+            data = db.session.execute(text('CALL ObtenerSupervisoresPorSucursal(:id)'), {'id': session['id']})
+            supervisores = data.mappings().all()  
 
-        return render_template('dashboard_empleado.html', datos_generales=datos_generales,
+            datos_especificos = {
+                'sucursales': datos_sucursales,
+                'supervisores': supervisores,
+                'supervisores_disponibles': supervisores_disponibles  
+            }
+
+        
+        return render_template('dashboard_empleado.html', 
+                               datos_generales=datos_generales,
                                datos_especificos=datos_especificos)
+@app.route('/asignar_supervisor', methods=['POST'])
+def asignar_supervisor():
+    supervisor_id = request.form['supervisor_id']
+    sucursal_id = request.form['sucursal_id']
+    if supervisor_id and sucursal_id:
+        pass
+    else:
+        flash("Error: Debes seleccionar un supervisor y sucursal", "danger")
+        return redirect(url_for('dashboard_empleado'))
 
 
 if __name__ == '__main__':
