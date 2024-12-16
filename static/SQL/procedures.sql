@@ -540,3 +540,61 @@ label:BEGIN
 END$$
 
 DELIMITER ;
+DELIMITER //
+DROP PROCEDURE if exists AsignarSupervisor;
+CREATE PROCEDURE AsignarSupervisor(
+    IN p_sucursal_id INT,
+    IN p_supervisor_id INT
+)
+BEGIN
+    DECLARE sucursal_asignada INT;
+
+    SELECT id INTO sucursal_asignada
+    FROM sucursales
+    WHERE supervisor_id = p_supervisor_id
+    LIMIT 1;
+
+    IF sucursal_asignada IS NOT NULL THEN
+        SIGNAL SQLSTATE '45000'
+        SET MESSAGE_TEXT = 'El supervisor ya está asignado a otra sucursal.';
+    ELSE
+        -- Asignar el supervisor a la sucursal
+        UPDATE sucursales
+        SET supervisor_id = p_supervisor_id
+        WHERE id = p_sucursal_id;
+    END IF;
+    
+END //
+
+DELIMITER ;
+DELIMITER //
+
+DROP PROCEDURE IF EXISTS ObtenerSupervisoresDisponibles;
+
+CREATE PROCEDURE ObtenerSupervisoresDisponibles()
+BEGIN
+    -- Seleccionar todos los empleados que son supervisores
+    SELECT e.id, CONCAT(e.nombres, ' ', e.apellido1, ' ', e.apellido2) AS nombre_completo
+    FROM empleado e
+    INNER JOIN supervisor s ON e.id = s.id; -- Relacionando por el campo 'id' que existe en ambas tablas
+END //
+
+DELIMITER ;
+DELIMITER //
+
+DROP PROCEDURE IF EXISTS ObtenerSupervisoresPorSucursal;
+
+CREATE PROCEDURE ObtenerSupervisoresPorSucursal(IN gerente_id BIGINT)
+BEGIN
+    SELECT 
+        e.id AS SupervisorID,
+        CONCAT(e.nombres, ' ', e.apellido1, ' ', e.apellido2) AS NombreCompleto,
+        suc.nombre AS Sucursal
+    FROM supervisor s
+    INNER JOIN empleado e ON s.id = e.id
+    INNER JOIN sucursal suc ON suc.id = e.id_sucursal  -- Asumiendo que 'id_sucursal' está en 'empleado'
+    WHERE suc.id_gerente = gerente_id;  -- Filtramos por el ID del gerente
+END //
+
+DELIMITER ;
+
