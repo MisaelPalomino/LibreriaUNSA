@@ -1,5 +1,11 @@
 USE libreria;
 
+
+
+-- ******************************************************************************************
+-- Cliente
+-- ******************************************************************************************
+
 DELIMITER $$
 DROP PROCEDURE IF EXISTS LoginCliente;
 CREATE PROCEDURE LoginCliente(
@@ -57,7 +63,7 @@ BEGIN
         VALUES (
             nuevo_id,
             p_nombre_colegio,
---             p_niveles_educativos,
+            p_niveles_educativos,
             p_tipo_colegio
         );
     ELSE
@@ -74,6 +80,141 @@ END$$
 
 DELIMITER ;
 
+
+
+-- ******************************************************************************************
+-- Empleado
+-- ******************************************************************************************
+
+
+DELIMITER $$
+
+DROP PROCEDURE IF EXISTS ObtenerCredencialesEmpleado$$
+CREATE PROCEDURE ObtenerCredencialesEmpleado(
+	IN p_id BIGINT
+)
+BEGIN
+    SELECT id, password FROM empleado WHERE id = p_id;
+END$$
+DELIMITER ;
+
+DELIMITER $$
+
+DROP PROCEDURE IF EXISTS ObtenerTipoEmpleado$$
+CREATE PROCEDURE ObtenerTipoEmpleado(
+	IN p_id BIGINT
+)
+BEGIN
+    SELECT 'vendedor' AS ROL FROM vendedor v WHERE v.id = p_id
+    UNION
+    SELECT 'supervisor' AS ROL FROM supervisor s WHERE s.id = p_id
+    UNION
+    SELECT 'gerente' AS ROL FROM gerente g WHERE g.id = p_id;
+END$$
+DELIMITER ;
+
+DELIMITER $$
+
+DROP PROCEDURE IF EXISTS RegistrarEmpleado$$
+CREATE PROCEDURE RegistrarEmpleado(
+    IN p_nombres VARCHAR(255),
+    IN p_apellido1 VARCHAR(255),
+    IN p_apellido2 VARCHAR(255),
+    IN p_id_sucursal BIGINT,
+    IN p_password VARCHAR(255),
+    IN p_tipo_empleado ENUM('vendedor', 'supervisor', 'gerente'),
+    IN p_meta_mensual BIGINT, -- Solo para vendedores
+    IN p_id_supervisor BIGINT -- Solo para vendedores
+)
+label:BEGIN
+    START TRANSACTION;
+
+    -- Sucursal debe existir
+    IF NOT EXISTS (SELECT 1 FROM sucursal WHERE id = p_id_sucursal) THEN
+    	LEAVE label;
+    END IF;
+
+    -- Insertar en la tabla empleado
+    INSERT INTO empleado (nombres, apellido1, apellido2, id_sucursal, password)
+    VALUES (p_nombres, p_apellido1, p_apellido2, p_id_sucursal, p_password);
+
+    -- ID empleado recién insertado
+    SET @new_employee_id = LAST_INSERT_ID();
+
+    -- Verificar el tipo de empleado y registrar en la tabla correspondiente
+    IF p_tipo_empleado = 'vendedor' THEN
+        -- Validar que el supervisor exista
+        IF NOT EXISTS (SELECT 1 FROM supervisor WHERE id = p_id_supervisor) THEN
+            ROLLBACK;
+	        LEAVE label;
+        END IF;
+
+        -- Insertar en la tabla vendedor
+        INSERT INTO vendedor (id, meta_mensual, id_supervisor)
+        VALUES (@new_employee_id, p_meta_mensual, p_id_supervisor);
+
+    ELSEIF p_tipo_empleado = 'supervisor' THEN
+        -- Insertar en la tabla supervisor
+        INSERT INTO supervisor (id)
+        VALUES (@new_employee_id);
+
+    ELSEIF p_tipo_empleado = 'gerente' THEN
+        -- Insertar en la tabla gerente
+        INSERT INTO gerente (id)
+        VALUES (@new_employee_id);
+
+        UPDATE sucursal s SET s.id_gerente = @new_employee_id WHERE s.id = p_id_sucursal;
+    ELSE
+        -- Tipo empleado inválido
+        ROLLBACK;
+        LEAVE label;
+    END IF;
+
+    COMMIT;
+END$$
+
+DELIMITER ;
+
+
+
+
+
+-- ******************************************************************************************
+-- Sucursal
+-- ******************************************************************************************
+
+DELIMITER $$
+
+DROP PROCEDURE IF EXISTS RegistrarSucursal$$
+CREATE PROCEDURE RegistrarSucursal(
+    IN p_nombre VARCHAR(255),
+    IN p_departamento VARCHAR(255),
+    IN p_ciudad VARCHAR(255),
+    IN p_calle VARCHAR(255),
+    IN p_numero VARCHAR(255),
+    IN p_id_gerente BIGINT
+)
+label:BEGIN
+    -- Validar que el gerente exista si se especifica
+    IF p_id_gerente IS NOT NULL THEN
+        IF NOT EXISTS (SELECT 1 FROM gerente WHERE id = p_id_gerente) THEN
+            LEAVE label;
+        END IF;
+    END IF;
+
+    -- Insertar la sucursal con el gerente especificado o NULL
+    INSERT INTO sucursal (nombre, departamento, ciudad, calle, numero, id_gerente)
+    VALUES (p_nombre, p_departamento, p_ciudad, p_calle, p_numero, p_id_gerente);
+END$$
+
+DELIMITER ;
+
+
+
+
+-- ******************************************************************************************
+-- Libro/Categoria/Autor
+-- ******************************************************************************************
 
 DELIMITER $$
 
@@ -236,6 +377,64 @@ BEGIN
     INNER JOIN libro_categoria lc ON
         c.id = lc.id_categoria
     WHERE c.nombre = p_categoria;
+END$$
+
+DELIMITER ;
+
+
+
+
+-- ******************************************************************************************
+-- Compra/Detalle_compra
+-- ******************************************************************************************
+
+DELIMITER $$
+
+DROP PROCEDURE IF EXISTS RegistrarCompra$$
+CREATE PROCEDURE RegistrarCompra(
+    IN p_id_cliente BIGINT,
+    IN p_id_vendedor BIGINT,
+    IN p_fecha TIMESTAMP,
+    IN p_detalles JSON
+)
+label:BEGIN
+    DECLARE i INT;
+    DECLARE n_items INT;
+    DECLARE detail JSON;
+    DECLARE new_compra_id BIGINT;
+
+    -- Cliente y vendedor existen
+    IF NOT EXISTS (SELECT 1 FROM cliente WHERE id = p_id_cliente) THEN
+       LEAVE label;
+    END IF;
+
+    IF NOT EXISTS (SELECT 1 FROM vendedor WHERE id = p_id_vendedor) THEN
+       LEAVE label;
+    END IF;
+
+    INSERT INTO compra (id_cliente, id_vendedor, fecha)
+    VALUES (p_id_cliente, p_id_vendedor, p_fecha);
+
+    SET new_compra_id = LAST_INSERT_ID();
+
+    -- Detalles de la compra
+
+
+    SET i = 0;
+    SET n_items = JSON_LENGTH(p_detalles);
+
+    WHILE i < n_items DO
+        SET detail = JSON_EXTRACT(p_detalles, CONCAT('$[', i, ']'));
+
+        INSERT INTO detalle_compra (id_compra, id_libro, cantidad)
+        VALUES (
+            new_compra_id,
+            JSON_UNQUOTE(JSON_EXTRACT(detail, '$.id_libro')),
+            JSON_UNQUOTE(JSON_EXTRACT(detail, '$.cantidad'))
+        );
+
+        SET i = i + 1;
+    END WHILE;
 END$$
 
 DELIMITER ;

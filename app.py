@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, flash, redirect, url_for
+from flask import Flask, render_template, request, flash, redirect, url_for, session
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import text
 from werkzeug.security import check_password_hash
@@ -12,11 +12,7 @@ db = SQLAlchemy(app)
 @app.route('/')
 def index():  # put application's code here
     categorias = db.session.execute(text('CALL ObtenerCategorias()'))
-
     res_dict = categorias.mappings().all()
-
-    # print(res_dict)
-
     return render_template('index.html', categorias=res_dict)
 
 
@@ -26,14 +22,12 @@ def categoria_libros(categoria_nombre, pagina):
     num_libros_pagina = 20
     num_libros = db.session.execute(text('CALL ContarCategoria(:categoria)'),
                                     {'categoria': categoria_nombre}).scalar()
-    # print(num_libros)
     data = db.session.execute(
         text('CALL ObtenerLibrosConPaginacion(:categoria, :limite, :pagina)'),
         {'categoria': categoria_nombre, 'limite': num_libros_pagina, 'pagina': pagina}
     )
 
     res_dict = data.mappings().all()
-
     return render_template('libros_grilla.html', libros=res_dict, num_libros_pagina=num_libros_pagina,
                            num_libros=num_libros, categoria_nombre=categoria_nombre, pagina=pagina)
 
@@ -46,8 +40,6 @@ def detalle_libro(isbn):
     res_dict = data.mappings().all()
     if len(res_dict) == 0:
         return "Libro no encontrado"
-
-    # print(res_dict)
 
     return render_template('libro.html', libro=res_dict[0])
 
@@ -131,6 +123,43 @@ def login():
             flash(f'Error en el inicio de sesión: {str(e)}', 'danger')
 
     return render_template('login.html')
+
+
+# Ruta para el login
+@app.route('/login_empleado', methods=['GET', 'POST'])
+def login_empleado():
+    if request.method == 'GET':
+        return render_template('login_empleado.html')
+    if request.method == 'POST':
+        id = request.form['id']
+        password = request.form['password']
+
+    data = db.session.execute(
+        text('CALL ObtenerCredencialesEmpleado(:id)'), {'id': id})
+    empleado = data.mappings().first()
+    # res_dict = data.mappings().all()
+
+    # Verificar credenciales
+
+    if empleado and empleado['password'] == password:
+        # Determinar el rol
+        data = db.session.execute(
+            text('CALL ObtenerTipoEmpleado(:id)'), {'id': id})
+        tipo = data.mappings().first()
+
+        if tipo:
+            session['employee_id'] = empleado['id']
+            session['role'] = tipo['ROL']
+            # Redirigir según el rol
+            if tipo['ROL'] == 'vendedor':
+                return redirect(url_for('vendedor_dashboard'))
+            elif tipo['ROL'] == 'supervisor':
+                return redirect(url_for('supervisor_dashboard'))
+            elif tipo['ROL'] == 'gerente':
+                return redirect(url_for('gerente_dashboard'))
+    else:
+        print("Credenciales inválidas")
+        return render_template('login_empleado.html')
 
 
 if __name__ == '__main__':
